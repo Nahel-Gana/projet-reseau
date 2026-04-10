@@ -6,45 +6,61 @@ public class ClientChatUDP {
     private DatagramSocket client ;
 
     public static void main(String[] args) {
-        String serveurIP = "172.28.180.249" ;
-        int serveurPort = 40000 ;
+        String serveurIP = "127.0.0.1" ;
+        int serveurPort = 9000 ;
 
-        try (DatagramSocket socket = new DatagramSocket() ;
-            Scanner scanner = new Scanner(System.in)) {
+        try {
+            DatagramSocket socket = new DatagramSocket() ;
+            Scanner scanner = new Scanner(System.in) ;
+            InetAddress adresseServeur = InetAddress.getByName(serveurIP) ;
 
-            System.out.println("Client UDP étendu. Tapez 'exit' pour arrêter.") ;
+            System.out.println("Pseudo : ");
+            String pseudo = scanner.nextLine() ;
 
-            while (true) {
-                System.out.print("Entrez votre message : ") ;
-                String message = scanner.nextLine() ;
+            String join = "JOIN:" + pseudo ;
+            socket.send(new DatagramPacket(join.getBytes(), join.length(), adresseServeur, serveurPort)) ;
 
-                if (message.equalsIgnoreCase("exit")) {
-                    byte[] data = message.getBytes() ;
-                    InetAddress addr = InetAddress.getByName(serveurIP) ;
-                    DatagramPacket packet = new DatagramPacket(data, data.length, addr, serveurPort) ;
-                    socket.send(packet) ;
-                    System.out.println("Message 'exit' envoyé au serveur. Fermeture du client.") ;
-                    break ;
+            byte[] tmp = new byte[1024] ;
+            DatagramPacket reponse = new DatagramPacket(tmp, tmp.length) ;
+            socket.receive(reponse) ; 
+
+            String message = new String(reponse.getData(), 0, reponse.getLength()) ;
+            int portDedie = Integer.parseInt(message.split(":")[1]) ;
+            System.out.println("Port choisi : " + portDedie) ;
+
+            DatagramSocket socketChat = new DatagramSocket() ;
+            Thread ecoute = new Thread(() -> {
+                try {
+                    byte[] temp = new byte[1024] ;
+                    while (true) {
+                        DatagramPacket p = new DatagramPacket(temp, temp.length) ;
+                        socketChat.receive(p) ;
+                        String m = new String(p.getData(), 0, p.getLength()) ;
+                        System.out.println("\n" + m) ;
+                    }
                 }
-
-                byte[] donnees = message.getBytes() ;
-                InetAddress adresseServeur = InetAddress.getByName(serveurIP) ;
-                DatagramPacket packet = new DatagramPacket(donnees, donnees.length, adresseServeur, serveurPort) ;
+                catch (Exception e) {
+                    e.printStackTrace() ;
+                }
+            }) ;
+            ecoute.start() ;
+            
+            while (true) {
+                System.out.print("> ") ;
+                String msg = scanner.nextLine() ;
+                byte[] donnees = msg.getBytes() ;
+                DatagramPacket packet = new DatagramPacket(donnees, donnees.length, adresseServeur, portDedie) ;
                 socket.send(packet) ;
 
-                byte[] buffer = new byte[1024] ;
-                DatagramPacket packetReponse = new DatagramPacket(buffer, buffer.length) ;
-                try {
-                    socket.setSoTimeout(3000) ;
-                    socket.receive(packetReponse) ;
-                    String reponse = new String(packetReponse.getData(), 0, packetReponse.getLength()) ;
-                    System.out.println("Réponse du serveur : " + reponse) ;
-                } catch (java.net.SocketTimeoutException e) {
-                    System.out.println("Aucune réponse du serveur après 3 secondes.") ;
+                if (msg.equalsIgnoreCase("exit")) {
+                    socketChat.close() ;
+                    break ;
                 }
             }
-
-        } catch (Exception e) {
+            socket.close() ;
+            scanner.close() ;
+        }
+        catch (Exception e) {
             e.printStackTrace()  ;
         }
     }
