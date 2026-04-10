@@ -1,3 +1,5 @@
+import java.net.* ;
+
 /**
  * Classe représentant les informations d'un client.
  * Elle contient le pseudo, l'adresse IP et le port du client.
@@ -8,7 +10,7 @@ public class ClientInfo {
     private String pseudo;
     
     /** Adresse IP du client */
-    private String adresseIP;
+    private InetAddress adresseIP;
     
     /** Port utilisé par le client */
     private int port;
@@ -18,9 +20,7 @@ public class ClientInfo {
      * Initialise les attributs avec des valeurs vides ou nulles.
      */
     public ClientInfo() {
-        this.pseudo = "";
-        this.adresseIP = "";
-        this.port = 0;
+        
     }
 
     /**
@@ -30,7 +30,7 @@ public class ClientInfo {
      * @param adresseIP l'adresse IP du client
      * @param port le port utilisé par le client
      */
-    public ClientInfo(String pseudo, String adresseIP, int port) {
+    public ClientInfo(String pseudo, InetAddress adresseIP, int port) {
         this.pseudo = pseudo;
         this.adresseIP = adresseIP;
         this.port = port;
@@ -59,7 +59,7 @@ public class ClientInfo {
      *
      * @return l'adresse IP
      */
-    public String getAdresseIP() {
+    public InetAddress getAdresseIP() {
         return adresseIP;
     }
 
@@ -68,7 +68,7 @@ public class ClientInfo {
      *
      * @param adresseIP la nouvelle adresse IP
      */
-    public void setAdresseIP(String adresseIP) {
+    public void setAdresseIP(InetAddress adresseIP) {
         this.adresseIP = adresseIP;
     }
 
