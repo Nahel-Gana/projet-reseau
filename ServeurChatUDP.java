@@ -22,7 +22,7 @@ public class ServeurChatUDP {
      * Table concurrente contenant les clients connectés.
      * La clé est le pseudo du client, la valeur contient ses informations.
      */
-    private static ConcurrentHashMap<String, ClientInfo> clients ;
+    private static ConcurrentHashMap<String, ClientInfo> clients = new ConcurrentHashMap<String, ClientInfo>() ;
 
     /**
      * Constructeur du serveur.
@@ -100,7 +100,7 @@ public class ServeurChatUDP {
                     // Ajout du client dans la map
                     clients.put(pseudo, client) ;
                     // Affichage de la connexion du client
-                    System.out.println(pseudo + "connecté") ;
+                    System.out.println(pseudo + " connecté") ;
 
                     // Lancement d'un thread pour gérer le client
                     GestionnaireClient gestionnaire = new GestionnaireClient(client, socketDediee, clients) ;
