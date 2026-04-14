@@ -38,7 +38,7 @@ public class ClientChatUDP {
     public static void main(String[] args) {
         String serveurIP = "127.0.0.1";
         int serveurPort = 9000;
-        running = false ;
+        running = true ;
 
         try {
             DatagramSocket socket = new DatagramSocket();
@@ -61,9 +61,6 @@ public class ClientChatUDP {
             int portDedie = Integer.parseInt(message.split(":")[1]);
             System.out.println("Port choisi : " + portDedie);
 
-            // Socket dédié au chat
-            DatagramSocket socketChat = new DatagramSocket();
-
             /**
              * Thread d'écoute des messages entrants.
              * Fonctionne en continu et affiche chaque message reçu.
@@ -74,7 +71,14 @@ public class ClientChatUDP {
 
                     while (running) {
                         DatagramPacket p = new DatagramPacket(temp, temp.length);
-                        socketChat.receive(p);
+                        socket.receive(p);
+                        System.out.println("[CLIENT] reçu depuis " + p.getAddress() + ":" + p.getPort());
+                        System.out.println("\n===== DEBUG CLIENT RECEPTION =====");
+                        System.out.println("FROM = " + p.getAddress());
+                        System.out.println("PORT = " + p.getPort());
+                        System.out.println("TAILLE = " + p.getLength());
+                        System.out.println("RAW = " + new String(p.getData(), 0, p.getLength()));
+                        System.out.println("=================================");
 
                         String m = new String(p.getData(), 0, p.getLength());
                         System.out.println("\n" + m);
@@ -96,11 +100,18 @@ public class ClientChatUDP {
                 byte[] donnees = msg.getBytes();
                 DatagramPacket packet = new DatagramPacket(donnees, donnees.length, adresseServeur, portDedie);
 
-                socketChat.send(packet);
+                System.out.println("\n===== DEBUG CLIENT SEND =====");
+                System.out.println("DEST = " + adresseServeur);
+                System.out.println("PORT DEDIE = " + portDedie);
+                System.out.println("MSG = " + msg);
+                System.out.println("LOCAL SOCKET PORT = " + socket.getLocalPort());
+                System.out.println("=============================");
+                socket.send(packet);
+                System.out.println("[CLIENT] envoi vers " + adresseServeur + ":" + portDedie + " | msg = " + msg);
 
                 // Condition de sortie
                 if (msg.equalsIgnoreCase("exit")) {
-                    socketChat.close();
+                    socket.close();
                     break;
                 }
             }
@@ -113,3 +124,4 @@ public class ClientChatUDP {
         }
     }
 }
+

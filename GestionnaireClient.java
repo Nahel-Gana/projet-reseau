@@ -45,6 +45,24 @@ public class GestionnaireClient implements Runnable {
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socketClient.receive(packet);
                 String msg = new String(packet.getData(), 0, packet.getLength()).trim();
+                System.out.println("[THREAD " + client.getPseudo() + "] reçu de " + packet.getAddress() + ":" + packet.getPort());
+                System.out.println("[THREAD " + client.getPseudo() + "] message = " + msg);
+                System.out.println("\n===== DEBUG THREAD RECEPTION =====");
+                System.out.println("CLIENT = " + client.getPseudo());
+                System.out.println("FROM IP = " + packet.getAddress());
+                System.out.println("FROM PORT = " + packet.getPort());
+                System.out.println("MESSAGE = " + msg);
+                System.out.println("SOCKET THREAD PORT = " + socketClient.getLocalPort());
+                System.out.println("=================================");
+                System.out.println("\n===== TRACE COMPLETE PACKET =====");
+                System.out.println("THREAD = " + client.getPseudo());
+                System.out.println("SOCKET LOCAL PORT = " + socketClient.getLocalPort());
+                System.out.println("SOURCE PACKET IP = " + packet.getAddress());
+                System.out.println("SOURCE PACKET PORT = " + packet.getPort());
+                System.out.println("EXPECTED IP = " + client.getAdresseIP());
+                System.out.println("EXPECTED PORT = " + client.getPort());
+                System.out.println("MESSAGE = " + msg);
+                System.out.println("===============================");
 
                 // 3. Traitement des commandes et messages
                 if (msg.equalsIgnoreCase("EXIT")) {
@@ -68,6 +86,10 @@ public class GestionnaireClient implements Runnable {
                 } 
                 else {
                     // Message normal : diffusion à tout le monde
+                    if (msg.startsWith("INFO:")) return;
+
+                    if (msg.startsWith(client.getPseudo() + " :")) return;
+
                     diffuser(client.getPseudo() + " : " + msg);
                 }
             }
@@ -89,16 +111,26 @@ public class GestionnaireClient implements Runnable {
     private void diffuser(String texte) {
         byte[] data = texte.getBytes();
         for (ClientInfo destinataire : clients.values()) {
-            try {
-                DatagramPacket p = new DatagramPacket(
-                    data, 
-                    data.length, 
-                    destinataire.getAdresseIP(), 
-                    destinataire.getPort()
-                );
-                socketClient.send(p);
-            } catch (Exception e) {
-                // Erreur sur un client, on continue pour les autres
+            if (!destinataire.getPseudo().equals(client.getPseudo())) {
+                try {
+                    DatagramPacket p = new DatagramPacket(
+                        data, 
+                        data.length, 
+                        destinataire.getAdresseIP(), 
+                        destinataire.getPort()
+                    );
+                    System.out.println("[DIFFUSION] Envoi à " + destinataire.getPseudo() + " -> " + destinataire.getAdresseIP() + ":" + destinataire.getPort() + " | msg = " + texte);
+                    System.out.println("\n===== DEBUG DIFFUSION =====");
+                    System.out.println("FROM = " + client.getPseudo());
+                    System.out.println("TO = " + destinataire.getPseudo());
+                    System.out.println("IP cible = " + destinataire.getAdresseIP());
+                    System.out.println("PORT cible = " + destinataire.getPort());
+                    System.out.println("MSG = " + texte);
+                    System.out.println("===========================");
+                    socketClient.send(p);
+                } catch (Exception e) {
+                    // Erreur sur un client, on continue pour les autres
+                }
             }
         }
     }
