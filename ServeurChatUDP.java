@@ -76,14 +76,6 @@ public class ServeurChatUDP {
                 String message = new String(packet.getData(), 0, packet.getLength()) ;
                 // Affichage du message reçu
                 System.out.println("Message reçu : " + message) ;
-                System.out.println("[SERVEUR] Reçu de " + packet.getAddress() + ":" + packet.getPort() + " -> " + message);
-                System.out.println("\n===== DEBUG RECEPTION SERVEUR =====");
-                System.out.println("FROM CLIENT RAW:");
-                System.out.println("IP source = " + packet.getAddress());
-                System.out.println("port source = " + packet.getPort());
-                System.out.println("message brut = " + message);
-                System.out.println("===================================");
-
                 // Si le message est un message de connexion
                 if (message.startsWith("JOIN:")) {
                     // Récupération du pseudo
@@ -99,10 +91,6 @@ public class ServeurChatUDP {
                     byte[] data = reponse.getBytes() ;
                     // Création du paquet de la réponse
                     DatagramPacket packetReponse = new DatagramPacket(data, data.length, packet.getAddress(), packet.getPort()) ;
-                    System.out.println("\n===== DEBUG ENVOI PORT =====");
-                    System.out.println("Envoi à IP = " + packet.getAddress());
-                    System.out.println("Réponse = " + reponse);
-                    System.out.println("===========================");
                     // Envoi du paquet réponse
                     socket.send(packetReponse) ;
 
@@ -112,18 +100,6 @@ public class ServeurChatUDP {
                     clients.put(pseudo, client) ;
                     // Affichage de la connexion du client
                     System.out.println(pseudo + " connecté") ;
-                    System.out.println("[SERVEUR] Ajout client " + pseudo + " IP=" + client.getAdresseIP() + " PORT=" + client.getPort());
-                    System.out.println("\n===== DEBUG CLIENT REGISTER =====");
-                    System.out.println("Pseudo = " + pseudo);
-                    System.out.println("IP stockée = " + client.getAdresseIP());
-                    System.out.println("PORT stocké = " + client.getPort());
-                    System.out.println("PORT socket dédiée = " + portClient);
-                    System.out.println("=================================");
-                    System.out.println("\n===== DEBUG MAP CLIENTS =====");
-                    clients.forEach((k, v) -> {
-                        System.out.println(k + " -> " + v.getAdresseIP() + ":" + v.getPort());
-                    });
-                    System.out.println("============================");
 
                     // Lancement d'un thread pour gérer le client
                     GestionnaireClient gestionnaire = new GestionnaireClient(client, socketDediee, clients) ;

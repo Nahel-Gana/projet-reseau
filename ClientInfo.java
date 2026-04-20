@@ -15,12 +15,14 @@ public class ClientInfo {
     /** Port utilisé par le client */
     private int port;
 
+    private long derniereActivite;
+
     /**
      * Constructeur par défaut.
      * Initialise les attributs avec des valeurs vides ou nulles.
      */
     public ClientInfo() {
-        
+        this.derniereActivite = System.currentTimeMillis();
     }
 
     /**
@@ -34,6 +36,7 @@ public class ClientInfo {
         this.pseudo = pseudo;
         this.adresseIP = adresseIP;
         this.port = port;
+        this.derniereActivite = System.currentTimeMillis();
     }
 
     /**
@@ -88,5 +91,13 @@ public class ClientInfo {
      */
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public long getDerniereActivite() {
+        return derniereActivite;
+    }
+
+    public void setDerniereActivite(long derniereActivite) {
+        this.derniereActivite = derniereActivite;
     }
 }

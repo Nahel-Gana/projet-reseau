@@ -72,16 +72,23 @@ public class ClientChatUDP {
                     while (running) {
                         DatagramPacket p = new DatagramPacket(temp, temp.length);
                         socket.receive(p);
-                        System.out.println("[CLIENT] reçu depuis " + p.getAddress() + ":" + p.getPort());
-                        System.out.println("\n===== DEBUG CLIENT RECEPTION =====");
-                        System.out.println("FROM = " + p.getAddress());
-                        System.out.println("PORT = " + p.getPort());
-                        System.out.println("TAILLE = " + p.getLength());
-                        System.out.println("RAW = " + new String(p.getData(), 0, p.getLength()));
-                        System.out.println("=================================");
 
                         String m = new String(p.getData(), 0, p.getLength());
-                        System.out.println("\n" + m);
+
+                        if (m.equals("TIMEOUT")) {
+                            System.out.println("\nDéconnecté : inactivité > 60 secondes.");
+                            running = false;
+                            socket.close();
+                            scanner.close();
+                            return;
+                        }
+
+                        System.out.print("\r");           // retour début ligne
+                        System.out.print("                    "); // efface visuellement
+                        System.out.print("\r");
+                        System.out.println(m);            // affiche message reçu
+                        System.out.print("> ");           // remet le prompt
+                        System.out.flush();
                     }
                 } catch (Exception e) {
                     if (running) {
@@ -93,21 +100,16 @@ public class ClientChatUDP {
             ecoute.start();
 
             // Boucle d'envoi des messages utilisateur
-            while (true) {
+            while (running) {
                 System.out.print("> ");
                 String msg = scanner.nextLine();
+                if (!running) break;
 
                 byte[] donnees = msg.getBytes();
                 DatagramPacket packet = new DatagramPacket(donnees, donnees.length, adresseServeur, portDedie);
 
-                System.out.println("\n===== DEBUG CLIENT SEND =====");
-                System.out.println("DEST = " + adresseServeur);
-                System.out.println("PORT DEDIE = " + portDedie);
-                System.out.println("MSG = " + msg);
-                System.out.println("LOCAL SOCKET PORT = " + socket.getLocalPort());
-                System.out.println("=============================");
+                if (!running || socket.isClosed()) break;
                 socket.send(packet);
-                System.out.println("[CLIENT] envoi vers " + adresseServeur + ":" + portDedie + " | msg = " + msg);
 
                 // Condition de sortie
                 if (msg.equalsIgnoreCase("exit")) {

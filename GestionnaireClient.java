@@ -39,30 +39,36 @@ public class GestionnaireClient implements Runnable {
             // 1. Diffuser le message de bienvenue à tous
             diffuser("INFO: " + client.getPseudo() + " a rejoint le chat");
 
+            new Thread(() -> {
+                try {
+                    while (!socketClient.isClosed()) {
+                        long now = System.currentTimeMillis();
+                        long diff = now - client.getDerniereActivite();
+
+                        if (diff > 60000) { // 60 secondes
+                            envoyerAuClient("TIMEOUT");
+
+                            clients.remove(client.getPseudo());
+                            diffuser("INFO: " + client.getPseudo() + " a été déconnecté (inactif)");
+
+                            socketClient.close();
+                            break;
+                        }
+
+                        Thread.sleep(1000); // vérifie toutes les secondes
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+            }).start();
+
             byte[] buffer = new byte[1024];
             while (true) {
                 // 2. Recevoir le message du client
                 DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
                 socketClient.receive(packet);
                 String msg = new String(packet.getData(), 0, packet.getLength()).trim();
-                System.out.println("[THREAD " + client.getPseudo() + "] reçu de " + packet.getAddress() + ":" + packet.getPort());
-                System.out.println("[THREAD " + client.getPseudo() + "] message = " + msg);
-                System.out.println("\n===== DEBUG THREAD RECEPTION =====");
-                System.out.println("CLIENT = " + client.getPseudo());
-                System.out.println("FROM IP = " + packet.getAddress());
-                System.out.println("FROM PORT = " + packet.getPort());
-                System.out.println("MESSAGE = " + msg);
-                System.out.println("SOCKET THREAD PORT = " + socketClient.getLocalPort());
-                System.out.println("=================================");
-                System.out.println("\n===== TRACE COMPLETE PACKET =====");
-                System.out.println("THREAD = " + client.getPseudo());
-                System.out.println("SOCKET LOCAL PORT = " + socketClient.getLocalPort());
-                System.out.println("SOURCE PACKET IP = " + packet.getAddress());
-                System.out.println("SOURCE PACKET PORT = " + packet.getPort());
-                System.out.println("EXPECTED IP = " + client.getAdresseIP());
-                System.out.println("EXPECTED PORT = " + client.getPort());
-                System.out.println("MESSAGE = " + msg);
-                System.out.println("===============================");
+                client.setDerniereActivite(System.currentTimeMillis());
 
                 // 3. Traitement des commandes et messages
                 if (msg.equalsIgnoreCase("EXIT")) {
@@ -84,6 +90,9 @@ public class GestionnaireClient implements Runnable {
                     );
                     socketClient.send(reponsePacket);
                 } 
+                else if (msg.startsWith("/mp ")) {
+                    traiterMessagePrive(msg);
+                }
                 else {
                     // Message normal : diffusion à tout le monde
                     if (msg.startsWith("INFO:")) return;
@@ -119,19 +128,67 @@ public class GestionnaireClient implements Runnable {
                         destinataire.getAdresseIP(), 
                         destinataire.getPort()
                     );
-                    System.out.println("[DIFFUSION] Envoi à " + destinataire.getPseudo() + " -> " + destinataire.getAdresseIP() + ":" + destinataire.getPort() + " | msg = " + texte);
-                    System.out.println("\n===== DEBUG DIFFUSION =====");
-                    System.out.println("FROM = " + client.getPseudo());
-                    System.out.println("TO = " + destinataire.getPseudo());
-                    System.out.println("IP cible = " + destinataire.getAdresseIP());
-                    System.out.println("PORT cible = " + destinataire.getPort());
-                    System.out.println("MSG = " + texte);
-                    System.out.println("===========================");
                     socketClient.send(p);
                 } catch (Exception e) {
                     // Erreur sur un client, on continue pour les autres
                 }
             }
+        }
+    }
+
+    private void traiterMessagePrive(String msg) {
+        try {
+            // Format attendu : /mp pseudo message
+            String[] parties = msg.split(" ", 3);
+
+            if (parties.length < 3) {
+                envoyerAuClient("Format invalide. Utilisation : /mp <pseudo> <message>");
+                return;
+            }
+
+            String destinatairePseudo = parties[1];
+            String message = parties[2];
+
+            ClientInfo destinataire = clients.get(destinatairePseudo);
+
+            if (destinataire == null) {
+                envoyerAuClient("Utilisateur inconnu");
+                return;
+            }
+
+            // Message envoyé au destinataire
+            String messageFinal = "[MP de " + client.getPseudo() + "] : " + message;
+
+            byte[] data = messageFinal.getBytes();
+
+            DatagramPacket packet = new DatagramPacket(
+                data,
+                data.length,
+                destinataire.getAdresseIP(),
+                destinataire.getPort()
+            );
+
+            socketClient.send(packet);
+
+        } catch (Exception e) {
+            envoyerAuClient("Erreur lors de l'envoi du message privé");
+        }
+    }
+
+    private void envoyerAuClient(String texte) {
+        try {
+            byte[] data = texte.getBytes();
+
+            DatagramPacket packet = new DatagramPacket(
+                data,
+                data.length,
+                client.getAdresseIP(),
+                client.getPort()
+            );
+
+            socketClient.send(packet);
+        } catch (Exception e) {
+            // ignore
         }
     }
 }
