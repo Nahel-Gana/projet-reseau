@@ -107,7 +107,7 @@ public class ServeurChatUDP {
                     socket.send(packetReponse) ;
 
                     // Création du client
-                    ClientInfo client = new ClientInfo(pseudo, packet.getAddress(), portClient) ;
+                    ClientInfo client = new ClientInfo(pseudo, packet.getAddress(), packet.getPort()) ;
                     // Ajout du client dans la map
                     clients.put(pseudo, client) ;
                     // Affichage de la connexion du client
