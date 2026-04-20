@@ -4,9 +4,7 @@ import java.net.* ;
 /**
  * Classe représentant un serveur de chat utilisant le protocole UDP.
  * <p>
- * Ce serveur écoute sur un port fixe (9000) et permet aux clients de se connecter
- * en envoyant un message de type "JOIN:pseudo".
- * </p>
+ * Ce serveur écoute sur un port fixe (9000) et permet aux clients de se connecter en envoyant un message de type "JOIN:pseudo".
  * <p>
  * Lorsqu'un client se connecte :
  * <ul>
@@ -14,51 +12,52 @@ import java.net.* ;
  *     <li>Une réponse contenant ce port lui est envoyée</li>
  *     <li>Un thread est lancé pour gérer ce client</li>
  * </ul>
- * </p>
  */
 public class ServeurChatUDP {
 
     /**
-     * Table concurrente contenant les clients connectés.
-     * La clé est le pseudo du client, la valeur contient ses informations.
+     * Table concurrente contenant tous les clients connectés.
+     * <p>
+     * La clé correspond au pseudo du client, et la valeur contient ses informations réseau (IP, port, activité, etc.).
      */
     private static ConcurrentHashMap<String, ClientInfo> clients = new ConcurrentHashMap<String, ClientInfo>() ;
 
     /**
-     * Constructeur du serveur.
-     * Initialise la structure de stockage des clients.
+     * Constructeur du serveur de chat.
+     * <p>
+     * Initialise la structure de stockage des clients connectés.
      */
     public ServeurChatUDP() {
         clients = new ConcurrentHashMap<String, ClientInfo>() ;
     }
 
     /**
-     * Retourne la liste des clients connectés.
+     * Retourne la liste des clients actuellement connectés.
      *
-     * @return une table de hachage concurrente des clients
+     * @return une map concurrente contenant les clients connectés
      */
     public ConcurrentHashMap<String, ClientInfo> getClients() {
         return clients ;
     }
 
     /**
-     * Méthode principale lançant le serveur UDP.
+     * Point d'entrée principal du serveur UDP.
      * <p>
-     * Fonctionnement :
+     * Le serveur :
      * <ul>
-     *     <li>Écoute sur le port 9000</li>
-     *     <li>Réception des messages clients</li>
-     *     <li>Traitement des demandes de connexion (JOIN)</li>
-     *     <li>Création d'un thread dédié pour chaque client</li>
+     *     <li>écoute en continu sur le port 9000</li>
+     *     <li>reçoit les messages UDP des clients</li>
+     *     <li>traite les demandes de connexion (JOIN)</li>
+     *     <li>crée un socket dédié et un thread par client</li>
      * </ul>
-     * </p>
      *
-     * @param args arguments de la ligne de commande (non utilisés)
+     * @param args arguments de ligne de commande (non utilisés)
      */
     public static void main(String[] args) {
+        // Initialisation de la socket
         DatagramSocket socket = null ;
         try {
-            // Création d'un socket sur le port 9000
+            // Création d'une socket sur le port 9000
             socket = new DatagramSocket(9000) ;
             // Affichage de la fonctionnabilité du socket
             System.out.println("Port 9000 fonctionnel") ;
@@ -80,7 +79,7 @@ public class ServeurChatUDP {
                 if (message.startsWith("JOIN:")) {
                     // Récupération du pseudo
                     String pseudo = message.split(":")[1] ;
-                    // Création d'un socket dédié libre
+                    // Création d'une socket dédié libre
                     DatagramSocket socketDediee = new DatagramSocket(0) ;
                     // Récupération du port choisi
                     int portClient = socketDediee.getLocalPort() ;
@@ -113,7 +112,7 @@ public class ServeurChatUDP {
             e.printStackTrace() ;
         }
         finally {
-            // Fermeture du socket
+            // Fermeture de la socket
             if (socket != null) {
                 socket.close() ;
             }
